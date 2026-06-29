@@ -30,7 +30,7 @@ const { promisify } = require("node:util");
 const sh = promisify(exec);
 
 const API_KEY = process.env.OPENAI_API_KEY;
-const MODEL = process.env.OPENAI_MODEL || "gpt-4.1";
+const MODEL = process.env.OPENAI_MODEL || "gpt-5.5";
 
 // Cross-platform shell: PowerShell on Windows, POSIX sh elsewhere.
 const IS_WINDOWS = process.platform === "win32";

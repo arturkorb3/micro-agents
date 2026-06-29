@@ -47,7 +47,7 @@ which shell it has.
 ## Requirements
 
 - Node.js 18+ (for global `fetch`)
-- An OpenAI API key with access to `gpt-4.1` (or any model you set)
+- An OpenAI API key with access to `gpt-5.5` (or any model you set)
 
 ---
 
@@ -76,7 +76,7 @@ node --env-file=.env agent.js
 Override the model:
 
 ```bash
-OPENAI_MODEL="gpt-4o" node agent.js
+OPENAI_MODEL="gpt-5.5" node agent.js
 ```
 
 ---
