@@ -1,21 +1,25 @@
 #!/usr/bin/env node
 
 /**
- * Minimalster LLM-Agent mit Shell-Tool.
+ * Minimal LLM agent with a single shell tool. Cross-platform:
+ * runs commands in PowerShell on Windows and POSIX sh on Linux/macOS.
  *
- * Voraussetzungen:
- *   Node.js 18+  wegen global fetch
+ * Requirements:
+ *   Node.js 18+ (for global fetch)
  *
- * Start:
- *   export OPENAI_API_KEY="sk-..."
- *   node agent.js
+ * Run:
+ *   # bash / zsh
+ *   OPENAI_API_KEY="sk-..." node agent.js
+ *   # PowerShell
+ *   $env:OPENAI_API_KEY="sk-..."; node agent.js
+ *   # or, with Node 20.6+, load a .env file:
+ *   node --env-file=.env agent.js
  *
- * Optional:
- *   OPENAI_MODEL="gpt-5.5" node agent.js
+ * Optional: OPENAI_MODEL="gpt-4o" to override the model.
  *
- * WARNUNG:
- *   Dieses Beispiel führt Shell-Kommandos aus, die das Modell vorschlägt.
- *   Keine Sandbox, keine Isolation, keine Härtung.
+ * WARNING:
+ *   This runs shell commands the model proposes. No sandbox, no isolation,
+ *   no hardening. Only use on throwaway VMs / data you do not care about.
  */
 
 const readline = require("node:readline/promises");
@@ -28,8 +32,13 @@ const sh = promisify(exec);
 const API_KEY = process.env.OPENAI_API_KEY;
 const MODEL = process.env.OPENAI_MODEL || "gpt-4.1";
 
+// Cross-platform shell: PowerShell on Windows, POSIX sh elsewhere.
+const IS_WINDOWS = process.platform === "win32";
+const SHELL = IS_WINDOWS ? "powershell.exe" : "/bin/sh";
+const SHELL_NAME = IS_WINDOWS ? "PowerShell" : "POSIX sh";
+
 if (!API_KEY) {
-  console.error("Fehlt: OPENAI_API_KEY");
+  console.error("Missing environment variable: OPENAI_API_KEY");
   process.exit(1);
 }
 
@@ -38,13 +47,13 @@ const tools = [
     type: "function",
     name: "shell",
     description:
-      "Führt ein Shell-Kommando auf dem lokalen System aus und gibt stdout, stderr und Exit-Status zurück.",
+      "Run a shell command on the local system and return stdout, stderr and the exit status.",
     parameters: {
       type: "object",
       properties: {
         command: {
           type: "string",
-          description: "Das auszuführende Shell-Kommando.",
+          description: "The shell command to run.",
         },
       },
       required: ["command"],
@@ -55,16 +64,17 @@ const tools = [
 ];
 
 const instructions = `
-Du bist ein minimaler lokaler CLI-Agent.
-Du kannst mit dem Benutzer dialogisch sprechen.
-Du hast genau ein Tool: shell.
+You are a minimal local CLI agent. You talk with the user and have exactly one
+tool: shell.
 
-Nutze shell, wenn du Informationen aus dem lokalen System brauchst
-oder wenn der Benutzer dich bittet, etwas lokal auszuführen.
+Host OS: ${process.platform}. The shell tool runs commands in ${SHELL_NAME}, so
+use ${SHELL_NAME} syntax (${IS_WINDOWS
+  ? "e.g. Get-ChildItem, Get-Content, $env:VAR"
+  : "e.g. ls, cat, $VAR"}).
 
-Erkläre kurz, was du getan hast.
-Erfinde keine Shell-Ausgaben.
-Wenn ein Kommando fehlschlägt, erkläre den Fehler anhand von stderr/stdout.
+Use shell when you need information from the local system or when the user asks
+you to run something locally. Briefly explain what you did. Never invent shell
+output. If a command fails, explain the error from stderr/stdout.
 `;
 
 async function callOpenAI(input) {
@@ -97,7 +107,7 @@ async function runShell(command) {
     const result = await sh(command, {
       timeout: 30_000,
       maxBuffer: 1024 * 1024,
-      shell: "/bin/sh",
+      shell: SHELL,
     });
 
     return JSON.stringify({
@@ -144,7 +154,7 @@ async function agentTurn(history) {
   for (let step = 0; step < maxSteps; step++) {
     const response = await callOpenAI(history);
 
-    // Wichtig: komplette Modell-Ausgabe behalten, inklusive reasoning/function_call items.
+    // Keep the model's full output, including reasoning / function_call items.
     history.push(...(response.output || []));
 
     const toolCalls = (response.output || []).filter(
@@ -162,7 +172,7 @@ async function agentTurn(history) {
           call_id: call.call_id,
           output: JSON.stringify({
             ok: false,
-            error: `Unbekanntes Tool: ${call.name}`,
+            error: `Unknown tool: ${call.name}`,
           }),
         });
         continue;
@@ -183,7 +193,7 @@ async function agentTurn(history) {
           call_id: call.call_id,
           output: JSON.stringify({
             ok: false,
-            error: "Fehlendes Argument: command",
+            error: "Missing argument: command",
           }),
         });
         continue;
@@ -201,7 +211,7 @@ async function agentTurn(history) {
     }
   }
 
-  return "Agent-Loop abgebrochen: maximale Tool-Schritte erreicht.";
+  return "Agent loop aborted: reached the maximum number of tool steps.";
 }
 
 async function main() {
@@ -212,11 +222,11 @@ async function main() {
 
   const history = [];
 
-  console.log("Minimal Shell-Agent gestartet.");
-  console.log("Beenden mit: /exit\n");
+  console.log(`Minimal shell agent started (${SHELL_NAME}).`);
+  console.log("Type /exit to quit.\n");
 
   while (true) {
-    const userText = await rl.question("du> ");
+    const userText = await rl.question("you> ");
 
     if (!userText.trim()) continue;
 
@@ -233,7 +243,7 @@ async function main() {
       const answer = await agentTurn(history);
       console.log(`\nagent> ${answer}\n`);
     } catch (err) {
-      console.error("\n[Fehler]");
+      console.error("\n[error]");
       console.error(err.message || err);
       console.error();
     }

@@ -1,57 +1,79 @@
 # micro-agent
 
-> **Minimalster LLM-Agent für die lokale CLI** — ein einziges Tool: `shell`.
+> **A minimal LLM agent for your local CLI** — one tool: `shell`.
 
-Ein vollständiger Agentenloop in einer einzigen Datei (`agent.js`, ~200 Zeilen).  
-Kein Framework, keine Dependencies, nur Node.js 18+.
-
----
-
-## ⚠️ Sicherheitshinweis
-
-**Dieses Projekt ist ein Lern- und Demonstrations-Snippet. Es ist ausdrücklich NICHT für den produktiven Einsatz geeignet.**
-
-- Das Modell kann **beliebige Shell-Kommandos** auf deinem System ausführen lassen — ohne Bestätigung, ohne Einschränkung.
-- Es gibt **keine Sandbox, keine Isolation, keine Zugriffskontrolle**.
-- Ein kompromittiertes oder manipuliertes Modell (Prompt Injection) könnte destruktive Kommandos ausführen.
-- Führe das Script **niemals** als root/Administrator aus.
-- Nutze es **niemals** in Netzwerken oder auf Systemen mit sensiblen Daten.
-
-**Nur auf dedizierten Wegwerf-VMs oder in Containern mit Netzwerkisolation betreiben, wenn überhaupt.**
+A complete agent loop in a single file (`agent.js`, ~200 lines). No framework, no
+dependencies, just Node.js 18+. **Cross-platform:** it runs commands in
+**PowerShell** on Windows and **POSIX `sh`** on Linux/macOS, and tells the model
+which one it has so it uses the right syntax.
 
 ---
 
-## Funktionsweise
+## ⚠️ Security warning
+
+**This is a learning / demonstration snippet. It is explicitly NOT meant for
+production use.**
+
+- The model can run **arbitrary shell commands** on your system — no
+  confirmation, no restrictions.
+- There is **no sandbox, no isolation, no access control**.
+- A compromised or manipulated model (prompt injection) could run destructive
+  commands.
+- **Never** run it as root / Administrator.
+- **Never** use it on networks or machines with sensitive data.
+
+**Run it only on a dedicated throwaway VM or an isolated container — if at all.**
+
+---
+
+## How it works
 
 ```
-Nutzer → [history] → OpenAI Responses API
-                          ↓
-                    function_call: shell
-                          ↓
-                    exec(command)
-                          ↓
-                    function_call_output → [history] → nächster Turn
+user → [history] → OpenAI Responses API
+                        ↓
+                  function_call: shell
+                        ↓
+                  exec(command)   # PowerShell on Windows, POSIX sh elsewhere
+                        ↓
+                  function_call_output → [history] → next turn
 ```
 
-Der Loop läuft bis zu 10 Schritte pro Nutzer-Nachricht. Dann wird abgebrochen.
+The loop runs up to 10 steps per user message, then stops. The system prompt is
+built dynamically from `process.platform`, so the model knows the host OS and
+which shell it has.
 
 ---
 
-## Voraussetzungen
+## Requirements
 
-- Node.js 18+ (wegen globalem `fetch`)
-- Ein OpenAI API Key mit Zugriff auf `gpt-4.1` (oder ein anderes Modell deiner Wahl)
+- Node.js 18+ (for global `fetch`)
+- An OpenAI API key with access to `gpt-4.1` (or any model you set)
 
 ---
 
-## Schnellstart
+## Quick start
+
+Set your API key and run:
 
 ```bash
-export OPENAI_API_KEY="sk-..."
+# bash / zsh
+OPENAI_API_KEY="sk-..." node agent.js
+```
+
+```powershell
+# PowerShell
+$env:OPENAI_API_KEY = "sk-..."
 node agent.js
 ```
 
-Optionales Modell überschreiben:
+Or, with **Node 20.6+**, load a `.env` file (copy `.env.example` to `.env`
+first — no dependency needed):
+
+```bash
+node --env-file=.env agent.js
+```
+
+Override the model:
 
 ```bash
 OPENAI_MODEL="gpt-4o" node agent.js
@@ -59,40 +81,47 @@ OPENAI_MODEL="gpt-4o" node agent.js
 
 ---
 
-## Beispiel-Session
+## Example session
 
 ```
-Minimal Shell-Agent gestartet.
-Beenden mit: /exit
+Minimal shell agent started (POSIX sh).
+Type /exit to quit.
 
-du> welche Node-Version läuft hier?
+you> which node version is running here?
 
 [shell] node --version
 
-agent> Du verwendest Node.js v22.3.0.
+agent> You're running Node.js v22.3.0.
 
-du> /exit
+you> /exit
 ```
 
 ---
 
-## Architektur in Kürze
+## Architecture at a glance
 
-| Teil | Beschreibung |
+| Part | What it does |
 |---|---|
-| `callOpenAI(input)` | Schickt den kompletten History-Array an die Responses API |
-| `runShell(command)` | Führt ein Shell-Kommando aus, gibt JSON mit stdout/stderr zurück |
-| `agentTurn(history)` | Loop: API aufrufen → Tool-Calls ausführen → wiederholen bis Text-Antwort |
-| `main()` | REPL: Nutzereingabe lesen → `agentTurn` → Antwort ausgeben |
+| `callOpenAI(input)` | Sends the full history array to the Responses API |
+| `runShell(command)` | Runs a command in the platform shell, returns JSON with stdout/stderr/exit |
+| `agentTurn(history)` | Loop: call API → run tool calls → repeat until a text answer |
+| `main()` | REPL: read user input → `agentTurn` → print the answer |
+
+The single system prompt is assembled from `process.platform`, so the model is
+told whether to use PowerShell or POSIX commands.
 
 ---
 
-## Warum die Responses API?
+## Why the Responses API?
 
-Die OpenAI [Responses API](https://platform.openai.com/docs/api-reference/responses) vereinfacht den Agentenloop: Die History ist stateful serverseitig verwaltbar, und `output_text` liefert den finalen Text direkt — kein manuelles `choices[0].message.content` parsen.
+The OpenAI [Responses API](https://platform.openai.com/docs/api-reference/responses)
+keeps the agent loop simple: the model returns native `function_call` items, and
+`output_text` gives the final text directly — no manual
+`choices[0].message.content` parsing.
 
 ---
 
-## Lizenz
+## License
 
-MIT
+[MIT](LICENSE).
+
