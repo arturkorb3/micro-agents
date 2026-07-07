@@ -1,7 +1,8 @@
 # micro-agents
 
-> **A collection of minimal agentic AI ideas** — each one a complete agent
-> loop in a single file. No framework, no dependencies, just Node.js 18+.
+> **A collection of small thought experiments around agentic AI** — each one
+> explored as a complete agent loop in a single file. No framework, no
+> dependencies, just Node.js 18+.
 
 Every agent lives in its own directory with its own README and uses the same
 skeleton: a tiny REPL, the OpenAI
