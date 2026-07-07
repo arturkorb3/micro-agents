@@ -27,11 +27,9 @@ Two independent ideas live here, deliberately not sold as one:
   Theory-motivated experiments, not tools of industrial value.
 - **`action-gate-agent`** demonstrates a practical architecture pattern:
   deterministic host-side gating of consequential agent actions. It stands
-  entirely on its own. The only connection to the trace agents is a shared
-  attitude — force the model through fixed, checkable structures instead of
-  free text — plus the (optional) reuse of trace-style extraction for one
-  analysis step. Its README contains an honest assessment of how loose that
-  connection really is.
+  entirely on its own and does not depend on the trace idea. The only
+  connection is a shared attitude: force the model through fixed, checkable
+  structures instead of free text.
 
 ---
 
