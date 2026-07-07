@@ -217,14 +217,25 @@ application" is oversold; the defensible form is the design rule above:
 trace = candidate generator, never authority. The trace is the packaging,
 not the active ingredient.
 
-**Two real weaknesses worth naming:**
+**Real weaknesses worth naming:**
 
 1. **Rule 2 depends on the LLM analysis.** Whether something is classified
    as an `embedded_agent_instruction` is decided by the model. An attacker
    who fools the analysis bypasses the rule. Robustness comes only from
    rules that do *not* depend on the analysis — like rule 3 (independent CRM
    evidence) and rule 4 (approval).
-2. **Approval does not scale.** An interactive `y/N` works in a demo but
+2. **No provenance binding.** Rule 1 is satisfied by *any* prior analysis —
+   the gate does not track *which* content an action is actually based on.
+   With several emails in play, analyzing MAIL-2 would unlock consequential
+   actions relating to MAIL-1. Invisible in this one-email demo, but real
+   deployments need taint/provenance tracking from input to action, which is
+   the genuinely hard part of this problem.
+3. **Rule 1 over-blocks.** Even an action ordered directly by the human
+   operator, with no untrusted content involved at all, is blocked until
+   some analysis exists. Defensible as a conservative demo policy, but a
+   real policy would scope the analysis requirement to actions *derived
+   from* untrusted input.
+4. **Approval does not scale.** An interactive `y/N` works in a demo but
    collapses into click fatigue at hundreds of actions per day. That is the
    unsolved problem of the whole field, not of this pattern specifically —
    but a real deployment needs risk-tiered approval, not blanket prompts.
