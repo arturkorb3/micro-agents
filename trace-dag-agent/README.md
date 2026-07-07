@@ -103,17 +103,17 @@ REPL commands: `/exit`, `/reset` (clears the outer history).
 ## Example prompt
 
 ```txt
-Nutze deinen Trace-Fallback als komponierte Pipeline.
+Use your trace fallback as a composed pipeline.
 
 Input:
 [" Alice ", "", "BOB ", "bob", " Clara "]
 
-Aufgabe:
-1. Namen trimmen
-2. lowercase machen
-3. leere Einträge entfernen
-4. Vorkommen nach Anfangsbuchstaben zählen
-5. Ergebnis als sortiertes Array von Paaren zurückgeben
+Task:
+1. trim the names
+2. lowercase them
+3. remove empty entries
+4. count occurrences by first letter
+5. return the result as a sorted array of pairs
 ```
 
 ---

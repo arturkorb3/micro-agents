@@ -25,10 +25,36 @@ we ask:
 
 > "LLM, follow an explicit execution protocol."
 
-The generated code is instrumented so that every mutation, loop iteration,
-branch decision and control-flow event must be logged. The logs **linearize
-loops** into explicit state sequences — turning the model from a narrator into
-a step-by-step simulator:
+The generated code is instrumented ("trace-hardened") so that every mutation,
+loop iteration, branch decision and control-flow event must be logged. A
+synthesized procedure looks like this — the `trace(...)` calls are part of the
+generated code itself:
+
+```js
+function sumUntilLimit(arr, limit) {
+  let sum = 0;
+  trace("initial state", { arr, limit, sum });
+
+  // TRACE_BLOCK: FOR_LOOP_1
+  for (let i = 0; i < arr.length; i++) {
+    trace("FOR_LOOP_1 condition", { i, cond: i < arr.length });
+    let value = arr[i];
+    trace("statement value = arr[i]", { i, value });
+    sum += value;
+    trace("statement sum += value", { sum });
+    if (sum >= limit) {
+      trace("branch sum >= limit", { sum, limit, taken: true });
+      break; // trace: control break
+    }
+  }
+
+  trace("final state", { sum });
+  return sum;
+}
+```
+
+The emulation call must then **linearize the loop** into explicit state
+sequences — turning the model from a narrator into a step-by-step simulator:
 
 ```txt
 FOR_LOOP_1 / iteration 2
@@ -107,9 +133,9 @@ OPENAI_TRACE_MODEL="gpt-5.5"  # model used for the trace emulation call
 ## Example prompt
 
 ```txt
-Normalisiere diese Namen: [" Alice ", "", "BOB ", "  Clara"].
-Trimmen, lowercasing, leere Strings entfernen.
-Nutze deinen Trace-Fallback.
+Normalize these names: [" Alice ", "", "BOB ", "  Clara"].
+Trim, lowercase, remove empty strings.
+Use your trace fallback.
 ```
 
 ---
