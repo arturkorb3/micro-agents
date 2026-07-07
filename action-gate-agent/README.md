@@ -107,18 +107,15 @@ it holds even if the model is fully compromised by the injected text: the
 model can *want* to call `issue_refund`, but the call physically does not
 reach the tool implementation.
 
-The four rules, in order:
+The gate applies four rules to every *consequential* call, in this order
+(these rule numbers are referenced throughout the rest of this README):
 
-1. **Analysis-first** — no consequential action before at least one
-   `analyze_untrusted_content` result exists.
-2. **Injection block** — a tool that is requested *only* by embedded
-   instructions inside untrusted content (and not by the customer) is
-   blocked.
-3. **Evidence check** — `issue_refund` additionally requires the CRM to show
-   a duplicate payment (the mock CRM shows one payment → always blocked
-   here).
-4. **Human approval** — anything consequential that survives rules 1–3 still
-   needs an interactive `y/N`.
+| # | Rule | What it enforces |
+|---|---|---|
+| **Rule 1** | Analysis-first | no consequential action before at least one `analyze_untrusted_content` result exists |
+| **Rule 2** | Injection block | a tool requested *only* by embedded instructions inside untrusted content (and not by the customer) is blocked |
+| **Rule 3** | Evidence check | `issue_refund` additionally requires the CRM to show a duplicate payment (the mock CRM shows one payment → always blocked here) |
+| **Rule 4** | Human approval | anything consequential that survives rules 1–3 still needs an interactive `y/N` |
 
 ## 4. One request, end to end — a recorded run
 
@@ -141,6 +138,7 @@ sequenceDiagram
 
     LLM->>Host: function_call read_email(MAIL-1)
     Host->>Gate: read_email?
+    Note over Gate: risk class "read" →<br/>allowed without rule checks<br/>(rules 1–4 apply only to<br/>consequential tools)
     Gate->>Ledger: allowed (risk: read)
     Gate-->>Host: ✅ ALLOWED
     Host->>Tools: read_email
@@ -167,7 +165,7 @@ sequenceDiagram
     rect rgb(255, 230, 230)
     LLM->>Host: function_call issue_refund(INV-2041, 129 EUR)
     Host->>Gate: issue_refund?
-    Note over Gate: rule 1 pass · rule 2 HIT<br/>(implied_tool in stored analysis,<br/>not requested by customer)
+    Note over Gate: consequential → rules 1–4 checked:<br/>rule 1 (analysis-first) pass<br/>rule 2 (injection block) HIT —<br/>implied_tool in stored analysis,<br/>not requested by customer
     Gate->>Ledger: blocked (reason logged)
     Gate-->>Host: ⛔ BLOCKED
     Host-->>LLM: { ok: false, blocked_by_policy_gate: true }
@@ -308,25 +306,27 @@ host code, not in a prompt, so it holds even if the model is fully
 compromised. This pattern stands entirely on its own — it does not depend
 on any other idea in this repo.
 
-**Real weaknesses worth naming:**
+**Real weaknesses worth naming** (rule numbers as defined in
+[section 3](#3-where-the-gate-sits)):
 
-1. **Rule 2 depends on the LLM analysis.** Whether something is classified
-   as an `embedded_agent_instruction` is decided by the model. An attacker
-   who fools the analysis bypasses the rule. Robustness comes only from
-   rules that do *not* depend on the analysis — like rule 3 (independent CRM
-   evidence) and rule 4 (approval).
-2. **No provenance binding.** Rule 1 is satisfied by *any* prior analysis —
+1. **Rule 2 (injection block) depends on the LLM analysis.** Whether
+   something is classified as an `embedded_agent_instruction` is decided by
+   the model. An attacker who fools the analysis bypasses the rule.
+   Robustness comes only from rules that do *not* depend on the analysis —
+   like rule 3 (independent CRM evidence) and rule 4 (human approval).
+2. **No provenance binding.** Rule 1 (analysis-first) is satisfied by *any*
+   prior analysis —
    the gate does not track *which* content an action is actually based on.
    With several emails in play, analyzing MAIL-2 would unlock consequential
    actions relating to MAIL-1. Invisible in this one-email demo, but real
    deployments need taint/provenance tracking from input to action, which is
    the genuinely hard part of this problem.
-3. **Rule 1 over-blocks.** Even an action ordered directly by the human
+3. **Rule 1 (analysis-first) over-blocks.** Even an action ordered directly by the human
    operator, with no untrusted content involved at all, is blocked until
    some analysis exists. Defensible as a conservative demo policy, but a
    real policy would scope the analysis requirement to actions *derived
    from* untrusted input.
-4. **Approval does not scale.** An interactive `y/N` works in a demo but
+4. **Rule 4 (human approval) does not scale.** An interactive `y/N` works in a demo but
    collapses into click fatigue at hundreds of actions per day. That is the
    unsolved problem of the whole field, not of this pattern specifically —
    but a real deployment needs risk-tiered approval, not blanket prompts.
