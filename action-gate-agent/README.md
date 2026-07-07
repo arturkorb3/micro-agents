@@ -103,9 +103,32 @@ model proposes: function_call { name, args }
 ```
 
 Because the gate sits *between* the model's intent and the tool's execution,
-it holds even if the model is fully compromised by the injected text: the
-model can *want* to call `issue_refund`, but the call physically does not
-reach the tool implementation.
+the *mechanism* holds even if the model is fully compromised by the injected
+text: the model can *want* to call `issue_refund`, but the call physically
+does not reach the tool implementation without passing the gate.
+
+Be precise about what that buys, though. The gate placement cannot be
+bypassed — but individual *rules* are only as strong as their inputs. A
+compromised model can emit a formally valid analysis that simply lies
+(`embedded_agent_instructions: []`, refund declared a customer request) and
+thereby satisfy every rule whose input is model-generated. Under full
+compromise, only rules grounded in something the model does not produce
+actually hold: independent data (rule 3 reads the CRM, not the analysis)
+and human judgment (rule 4). See weakness 1 in the
+[honest assessment](#honest-assessment).
+
+A useful way to picture the whole arrangement: the design creates a
+structured, non-functional **safety antechamber** between the business
+request and any tool decision. No consequential tool is reachable without
+passing through it — rule 1 forces the model in there first. But note who
+plays which role inside: the model is the one being *inspected*, not the
+inspector. It hands over an artifact (the schema-validated analysis) — a
+piece of evidence, not a verdict. The actual checks run deterministically
+in host code, over that artifact plus sources the model does not produce
+(CRM data, a human). Had the model been asked to perform the checks itself
+("verify before every action that…"), this would collapse back into
+prompt-level safety — exactly what a compromised model ignores or, worse,
+convincingly fakes.
 
 The gate applies four rules to every *consequential* call, in this order
 (these rule numbers are referenced throughout the rest of this README):
@@ -302,8 +325,10 @@ checks between model intent and tool execution, risk classes,
 human-in-the-loop, an audit ledger — this matches what production agent
 systems actually build today (tool allowlists, approval flows, standard
 anti-injection guidance). The value is in the *placement*: safety lives in
-host code, not in a prompt, so it holds even if the model is fully
-compromised. This pattern stands entirely on its own — it does not depend
+host code, not in a prompt, so the *mechanism* holds even if the model is
+fully compromised — though only rules grounded in independent data or human
+judgment hold with it (see weakness 1 below).
+This pattern stands entirely on its own — it does not depend
 on any other idea in this repo.
 
 **Real weaknesses worth naming** (rule numbers as defined in
@@ -311,9 +336,12 @@ on any other idea in this repo.
 
 1. **Rule 2 (injection block) depends on the LLM analysis.** Whether
    something is classified as an `embedded_agent_instruction` is decided by
-   the model. An attacker who fools the analysis bypasses the rule.
-   Robustness comes only from rules that do *not* depend on the analysis —
-   like rule 3 (independent CRM evidence) and rule 4 (human approval).
+   the model. A fully compromised model can emit a *formally valid* analysis
+   that lies — empty `embedded_agent_instructions`, the refund declared a
+   customer request — and rules 1 and 2 pass. In this demo the attack would
+   still die at rule 3, but by policy luck, not because the injection was
+   detected. Robustness comes only from rules that do *not* depend on the
+   analysis — rule 3 (independent CRM evidence) and rule 4 (human approval).
 2. **No provenance binding.** Rule 1 (analysis-first) is satisfied by *any*
    prior analysis —
    the gate does not track *which* content an action is actually based on.
