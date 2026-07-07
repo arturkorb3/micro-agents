@@ -58,12 +58,12 @@ const traceEvalTool = {
           "Concrete call with concrete arguments, e.g. normalizeNames([' Alice ', '', 'BOB ']).",
       },
       max_iterations: {
-        type: "integer",
+        type: ["integer", "null"],
         description:
-          "Hard cap for loop iterations to emulate. Default 80, maximum 200.",
+          "Hard cap for loop iterations to emulate. Default 80, maximum 200. Use null for the default.",
       },
     },
-    required: ["objective", "code", "invocation"],
+    required: ["objective", "code", "invocation", "max_iterations"],
     additionalProperties: false,
   },
   strict: true,
@@ -368,7 +368,12 @@ async function main() {
   console.log("Type /exit to quit.\n");
 
   while (true) {
-    const userText = await rl.question("you> ");
+    let userText;
+    try {
+      userText = await rl.question("you> ");
+    } catch {
+      break; // stdin closed (EOF, e.g. piped input)
+    }
 
     if (!userText.trim()) continue;
 

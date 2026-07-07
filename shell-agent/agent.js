@@ -226,7 +226,12 @@ async function main() {
   console.log("Type /exit to quit.\n");
 
   while (true) {
-    const userText = await rl.question("you> ");
+    let userText;
+    try {
+      userText = await rl.question("you> ");
+    } catch {
+      break; // stdin closed (EOF, e.g. piped input)
+    }
 
     if (!userText.trim()) continue;
 

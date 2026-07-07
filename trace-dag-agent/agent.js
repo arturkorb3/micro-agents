@@ -920,7 +920,12 @@ async function main() {
   console.log("Commands: /exit, /reset\n");
 
   while (true) {
-    const userText = await rl.question("you> ");
+    let userText;
+    try {
+      userText = await rl.question("you> ");
+    } catch {
+      break; // stdin closed (EOF, e.g. piped input)
+    }
     const trimmed = userText.trim();
 
     if (!trimmed) continue;
