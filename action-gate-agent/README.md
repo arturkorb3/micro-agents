@@ -117,6 +117,30 @@ actually hold: independent data (rule 3 reads the CRM, not the analysis)
 and human judgment (rule 4). See weakness 1 in the
 [honest assessment](#honest-assessment).
 
+So what *is* gained, if the analysis can lie? Four things, none of which
+is "the lie gets detected":
+
+1. **It defeats the cheap attacks.** The analysis is a second, isolated
+   call that sees only the untrusted content — not the operator
+   conversation, not the tool definitions. A typical injection that steers
+   the planner gets honestly classified by this narrower call. Lying
+   requires the compromise to survive *two* different contexts, which
+   raises the bar considerably without making the attack impossible.
+2. **Structure is what makes deterministic rules writable at all.** Rules
+   like "block tools requested only inside untrusted content" cannot be
+   expressed over free text. The antechamber's job is to force everything
+   into fixed fields so host code can check *something* — even knowing
+   those fields may be adversarial.
+3. **Lies become artifacts.** A compromised model must commit to a
+   concrete, falsifiable statement (`embedded_agent_instructions: []`) that
+   lands in the ledger next to the action it enabled. Silent manipulation
+   turns into on-record evidence that can be audited, sampled and used to
+   improve the rules.
+4. **The model-independent rules still stand behind it.** The antechamber
+   is the first filter, not the last line. Even a perfect lie only earns
+   the attacker a meeting with rule 3 (independent data) and rule 4 (a
+   human).
+
 A useful way to picture the whole arrangement: the design creates a
 structured, non-functional **safety antechamber** between the business
 request and any tool decision. No consequential tool is reachable without
