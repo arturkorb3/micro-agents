@@ -355,6 +355,23 @@ judgment hold with it (see weakness 1 below).
 This pattern stands entirely on its own — it does not depend
 on any other idea in this repo.
 
+**The underlying system problem.** The weaknesses below are not four
+independent bugs — most of them are symptoms of one structural issue: the
+design asks an untrusted component to testify about its own compromise.
+The same model that may be corrupted by the injected text is also the only
+component capable of semantically judging *whether* an injection is
+present. Any check whose input the model produces is therefore worthless
+exactly when it is needed most. The consequence is systematic: everything
+semantic comes from the model, so everything semantic is corruptible;
+reliable are only non-semantic anchors — independent data (the CRM), human
+judgment, hard capability limits (a tool that does not exist cannot be
+called), and mechanical provenance/taint tracking that follows information
+flow instead of interpreting it. The antechamber cannot *solve* this
+problem, only relocate it and make it visible: it forces the potentially
+corrupt semantics into a shape that the non-semantic checks can attach to,
+and in which lies go on record. Current research (CaMeL-style designs,
+taint tracking) attacks precisely this point.
+
 **Real weaknesses worth naming** (rule numbers as defined in
 [section 3](#3-where-the-gate-sits)):
 
