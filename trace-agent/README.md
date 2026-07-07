@@ -16,14 +16,22 @@ simulates it step by step with an explicit state protocol.
 
 ## The idea
 
-LLMs are often better at **small local transformations** than at keeping a
-long computation globally consistent "in their head". So instead of asking:
+To be clear up front: an LLM never *computes* anything deterministically.
+Every "evaluation step" here is next-token prediction — a probabilistic
+guess that merely tends to coincide with the correct arithmetic. There is
+no interpreter underneath, and no protocol changes that. What a protocol
+*can* change is the error profile: LLMs are more reliable at **small local
+transformations** than at keeping a long computation globally consistent
+"in their head". So instead of asking:
 
 > "LLM, compute the result."
 
 we ask:
 
 > "LLM, follow an explicit execution protocol."
+
+That does not turn prediction into computation — it decomposes one large
+guess into many small, individually checkable guesses.
 
 The generated code is instrumented ("trace-hardened") so that every mutation,
 loop iteration, branch decision and control-flow event must be logged. A
