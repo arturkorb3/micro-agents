@@ -1,127 +1,84 @@
-# micro-agent
+# micro-agents
 
-> **A minimal LLM agent for your local CLI** — one tool: `shell`.
+> **A collection of minimal agentic AI ideas** — each one a complete agent
+> loop in a single file. No framework, no dependencies, just Node.js 18+.
 
-A complete agent loop in a single file (`agent.js`, ~200 lines). No framework, no
-dependencies, just Node.js 18+. **Cross-platform:** it runs commands in
-**PowerShell** on Windows and **POSIX `sh`** on Linux/macOS, and tells the model
-which one it has so it uses the right syntax.
-
----
-
-## ⚠️ Security warning
-
-**This is a learning / demonstration snippet. It is explicitly NOT meant for
-production use.**
-
-- The model can run **arbitrary shell commands** on your system — no
-  confirmation, no restrictions.
-- There is **no sandbox, no isolation, no access control**.
-- A compromised or manipulated model (prompt injection) could run destructive
-  commands.
-- **Never** run it as root / Administrator.
-- **Never** use it on networks or machines with sensitive data.
-
-**Run it only on a dedicated throwaway VM or an isolated container — if at all.**
+Every agent lives in its own directory with its own README and uses the same
+skeleton: a tiny REPL, the OpenAI
+[Responses API](https://platform.openai.com/docs/api-reference/responses)
+with native function calling, and exactly **one tool**.
 
 ---
 
-## How it works
+## The agents
 
-```
-user → [history] → OpenAI Responses API
-                        ↓
-                  function_call: shell
-                        ↓
-                  exec(command)   # PowerShell on Windows, POSIX sh elsewhere
-                        ↓
-                  function_call_output → [history] → next turn
-```
+| Agent | Tool | Idea |
+|---|---|---|
+| [`shell-agent`](shell-agent/) | `shell` | The classic minimal CLI agent: the model runs real shell commands (PowerShell / POSIX sh). ⚠️ Unsandboxed — read its security warning. |
+| [`trace-agent`](trace-agent/) | `trace_eval` | A thought experiment: no runtime at all. The agent synthesizes small, pure, trace-hardened procedures and a second LLM call *emulates* them step by step ("LLM trace emulator"). |
+| [`trace-dag-agent`](trace-dag-agent/) | `trace_program` | The composition layer: small pure procedures with explicit I/O contracts, orchestrated as a pipeline/DAG with one stateless trace call per node. |
 
-The loop runs up to 10 steps per user message, then stops. The system prompt is
-built dynamically from `process.platform`, so the model knows the host OS and
-which shell it has.
+The trace agents execute **no code whatsoever** — they explore how far an LLM
+can get as a rudimentary (pseudo-)scripting fallback when no programming
+environment is available. They are theory-motivated experiments, not tools of
+industrial value.
 
 ---
 
 ## Requirements
 
 - Node.js 18+ (for global `fetch`)
-- An OpenAI API key with access to `gpt-5.5` (or any model you set)
-
----
+- An OpenAI API key
 
 ## Quick start
 
-Set your API key and run:
-
 ```bash
+cd shell-agent        # or trace-agent / trace-dag-agent
+
 # bash / zsh
 OPENAI_API_KEY="sk-..." node agent.js
 ```
 
 ```powershell
 # PowerShell
+cd shell-agent
 $env:OPENAI_API_KEY = "sk-..."
 node agent.js
 ```
 
-Or, with **Node 20.6+**, load a `.env` file (copy `.env.example` to `.env`
-first — no dependency needed):
+Or, with **Node 20.6+**, load a `.env` file (copy `.env.example` in the repo
+root to `.env` first — no dependency needed):
 
 ```bash
-node --env-file=.env agent.js
+cd shell-agent
+node --env-file=../.env agent.js
 ```
 
-Override the model:
+Common environment variables:
 
-```bash
-OPENAI_MODEL="gpt-5.5" node agent.js
-```
-
----
-
-## Example session
-
-```
-Minimal shell agent started (POSIX sh).
-Type /exit to quit.
-
-you> which node version is running here?
-
-[shell] node --version
-
-agent> You're running Node.js v22.3.0.
-
-you> /exit
-```
-
----
-
-## Architecture at a glance
-
-| Part | What it does |
+| Variable | Meaning |
 |---|---|
-| `callOpenAI(input)` | Sends the full history array to the Responses API |
-| `runShell(command)` | Runs a command in the platform shell, returns JSON with stdout/stderr/exit |
-| `agentTurn(history)` | Loop: call API → run tool calls → repeat until a text answer |
-| `main()` | REPL: read user input → `agentTurn` → print the answer |
-
-The single system prompt is assembled from `process.platform`, so the model is
-told whether to use PowerShell or POSIX commands.
+| `OPENAI_API_KEY` | required |
+| `OPENAI_MODEL` | override the (outer) model, default `gpt-5.5` |
+| `OPENAI_TRACE_MODEL` | trace agents only: model for the emulation calls |
 
 ---
 
-## Why the Responses API?
+## Shared skeleton
 
-The OpenAI [Responses API](https://platform.openai.com/docs/api-reference/responses)
-keeps the agent loop simple: the model returns native `function_call` items, and
-`output_text` gives the final text directly — no manual
-`choices[0].message.content` parsing.
+```
+user → [history] → OpenAI Responses API
+                        ↓
+                  function_call: <the one tool>
+                        ↓
+                  tool implementation
+                        ↓
+                  function_call_output → [history] → next turn
+```
 
----
+Each agent's README explains what its tool actually does — and, for the trace
+agents, what it deliberately does *not* do.
 
 ## License
 
 [MIT](LICENSE).
-
