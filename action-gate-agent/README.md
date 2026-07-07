@@ -69,15 +69,18 @@ decisions**:
 | *Which* tool to call next, with which arguments | every call still passes the gate |
 | The content of the analysis: mapping messy free text to structured claims (`claims`, `requested_actions`, `embedded_agent_instructions`, …) | must match the fixed schema or the host validator rejects it |
 
-For the analysis step the model is asked to synthesize a small pure
-extraction procedure and trace-emulate it (the technique from
-[`trace-agent`](../trace-agent/)). That makes the extraction disciplined and
-auditable — but the output is still model output. That is why the design rule
-of this whole demo is:
+*Implementation note:* this demo happens to perform the analysis step with
+the trace-emulation technique from [`trace-agent`](../trace-agent/) (the
+model synthesizes a small pure extraction procedure and emulates it). That
+is an **optional stylistic choice, not a load-bearing part of the design** —
+a plain structured-output call against the same schema would work equally
+well, because the safety work is done by the schema, the validator and the
+gate, not by the trace. Either way the output is model output, which is why
+the design rule of this whole demo is:
 
-> **The LLM-emulated trace / analysis is never the authority for real
-> actions.** It only produces *candidates*. Safety lives exclusively in the
-> fixed host components: schema, validator, gate rules, approval, ledger.
+> **The LLM analysis is never the authority for real actions.** It only
+> produces *candidates*. Safety lives exclusively in the fixed host
+> components: schema, validator, gate rules, approval, ledger.
 
 The model is a *controlled semantic adapter* in front of fixed software
 logic — not a replacement for it. (Where inputs are already structured, skip
