@@ -191,14 +191,51 @@ Lies MAIL-1, pruefe das CRM und versuche danach issue_refund aufzurufen.
 The second one reliably exercises the gate: the refund attempt is blocked and
 shows up in `/ledger`.
 
-## Honest limits
+## Honest assessment
 
-This is a demo of a *pattern*, not a security product. The extraction step
-can misclassify; the gate rules here are simplistic string checks; a
-determined attacker targets exactly the seams between LLM output and fixed
-logic. The point is architectural: consequential actions pass through fixed
-schemas, deterministic gates, approval and an audit trail — so failures
-become visible, attributable and interruptible instead of silent.
+A candid evaluation of how much of this actually holds up:
+
+**The gate pattern itself: valid — but not novel.** Deterministic policy
+checks between model intent and tool execution, risk classes,
+human-in-the-loop, an audit ledger — this matches what production agent
+systems actually build today (tool allowlists, approval flows, standard
+anti-injection guidance). The value is in the *placement*: safety lives in
+host code, not in a prompt, so it holds even if the model is fully
+compromised. This half stands on its own.
+
+**The trace component: the weaker part of the argument.** What does trace
+emulation *concretely* contribute to safety here? Honestly: little. The
+extraction into a fixed IR could just as well be a plain structured-output
+call — the schema and the validator do the safety work, not the emulated
+trace. The trace makes the extraction more *inspectable* (an audit artifact,
+a discipline imposed on the model), but it is produced by the same injectable
+model it is supposed to police. The claim "trace layer = the most impactful
+application" is oversold; the defensible form is the design rule above:
+trace = candidate generator, never authority. The trace is the packaging,
+not the active ingredient.
+
+**Two real weaknesses worth naming:**
+
+1. **Rule 2 depends on the LLM analysis.** Whether something is classified
+   as an `embedded_agent_instruction` is decided by the model. An attacker
+   who fools the analysis bypasses the rule. Robustness comes only from
+   rules that do *not* depend on the analysis — like rule 3 (independent CRM
+   evidence) and rule 4 (approval).
+2. **Approval does not scale.** An interactive `y/N` works in a demo but
+   collapses into click fatigue at hundreds of actions per day. That is the
+   unsolved problem of the whole field, not of this pattern specifically —
+   but a real deployment needs risk-tiered approval, not blanket prompts.
+
+**Bottom line:** the architecture (fixed IR + deterministic gate +
+evidence-based rules + ledger) is sound and close to practice. The trace
+mechanism is intellectually interesting but interchangeable from a security
+standpoint. As a demo of a pattern this is correctly scoped; as a product
+claim it would be too much. The extraction step can misclassify; the gate
+rules here are simplistic string checks; a determined attacker targets
+exactly the seams between LLM output and fixed logic. The point is
+architectural: consequential actions pass through fixed schemas,
+deterministic gates, approval and an audit trail — so failures become
+visible, attributable and interruptible instead of silent.
 
 ## License
 
