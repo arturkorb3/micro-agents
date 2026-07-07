@@ -17,11 +17,14 @@ with native function calling, and exactly **one tool**.
 | [`shell-agent`](shell-agent/) | `shell` | The classic minimal CLI agent: the model runs real shell commands (PowerShell / POSIX sh). ⚠️ Unsandboxed — read its security warning. |
 | [`trace-agent`](trace-agent/) | `trace_eval` | A thought experiment: no runtime at all. The agent synthesizes small, pure, trace-hardened procedures and a second LLM call *emulates* them step by step ("LLM trace emulator"). |
 | [`trace-dag-agent`](trace-dag-agent/) | `trace_program` | The composition layer: small pure procedures with explicit I/O contracts, orchestrated as a pipeline/DAG with one stateless trace call per node. |
+| [`action-gate-agent`](action-gate-agent/) | mocked email/CRM tools | The application layer: LLM trace extraction as a semantic adapter for untrusted content, plus a **fixed host policy gate** (validation, injection blocking, human approval, execution ledger) before consequential actions. |
 
 The trace agents execute **no code whatsoever** — they explore how far an LLM
 can get as a rudimentary (pseudo-)scripting fallback when no programming
 environment is available. They are theory-motivated experiments, not tools of
-industrial value.
+industrial value. `action-gate-agent` turns the same idea around: the trace
+layer as runtime governance *in front of* real tool calls — with the design
+rule that the LLM-emulated trace is never the authority for real actions.
 
 ---
 
