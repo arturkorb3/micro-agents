@@ -165,7 +165,7 @@ sequenceDiagram
     end
 
     LLM->>Host: function_call create_reply_draft(...) → ✅ draft, allowed
-    LLM-->>Operator: "Refund was blocked by policy; drafted a reply asking for proof."
+    LLM-->>Operator: "Refund was blocked by policy — drafted a reply asking for proof."
     Operator->>Host: /ledger
     Host-->>Operator: every decision: tool, args, risk, verdict, reason, timestamp
 ```
