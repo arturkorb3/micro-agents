@@ -138,7 +138,7 @@ The four rules, in order:
 | 5 | host | `validateAnalysis` checks the result against the fixed schema |
 | 6 | LLM | proposes `search_customer_record("INV-2041")` → allowed; CRM shows **one** payment of 129 EUR |
 | 7 | LLM | (if it tries) proposes `issue_refund(...)` |
-| 8 | **host gate** | **BLOCKED** — rule 2 (action demanded only by embedded instructions) and rule 3 (no duplicate payment in CRM) |
+| 8 | **host gate** | **BLOCKED** by rule 2 (action demanded only by embedded instructions); rule 3 would block it too (no duplicate payment in CRM) |
 | 9 | LLM | proposes `create_reply_draft(...)` asking for proof of payment → allowed |
 | 10 | host | `/ledger` shows every decision: tool, args, risk, verdict, reason, timestamp |
 
@@ -240,16 +240,16 @@ not the active ingredient.
    unsolved problem of the whole field, not of this pattern specifically —
    but a real deployment needs risk-tiered approval, not blanket prompts.
 
-**Bottom line:** the architecture (fixed IR + deterministic gate +
-evidence-based rules + ledger) is sound and close to practice. The trace
-mechanism is intellectually interesting but interchangeable from a security
-standpoint. As a demo of a pattern this is correctly scoped; as a product
-claim it would be too much. The extraction step can misclassify; the gate
-rules here are simplistic string checks; a determined attacker targets
-exactly the seams between LLM output and fixed logic. The point is
-architectural: consequential actions pass through fixed schemas,
-deterministic gates, approval and an audit trail — so failures become
-visible, attributable and interruptible instead of silent.
+**Bottom line:** the architecture (fixed intermediate representation +
+deterministic gate + evidence-based rules + ledger) is sound and close to
+practice; the trace mechanism is intellectually interesting but
+interchangeable from a security standpoint. This is a demo of a *pattern*,
+not a security product — the gate rules here are simplistic string checks,
+and a determined attacker targets exactly the seams between LLM output and
+fixed logic. What the pattern buys is architectural: consequential actions
+pass through fixed schemas, deterministic gates, approval and an audit
+trail, so failures become visible, attributable and interruptible instead
+of silent.
 
 ## License
 
