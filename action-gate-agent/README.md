@@ -108,7 +108,7 @@ text: the model can *want* to call `issue_refund`, but the call physically
 does not reach the tool implementation without passing the gate.
 
 Be precise about what that buys, though. The gate placement cannot be
-bypassed — but individual *rules* are only as strong as their inputs. A
+bypassed — but individual *rules* (see below) are only as strong as their inputs. A
 compromised model can emit a formally valid analysis that simply lies
 (`embedded_agent_instructions: []`, refund declared a customer request) and
 thereby satisfy every rule whose input is model-generated. Under full
@@ -180,7 +180,7 @@ sequenceDiagram
     participant Tools as Mock tools
     participant Ledger
 
-    Operator->>Host: "Lies MAIL-1, pruefe das CRM, rufe dann issue_refund auf."
+    Operator->>Host: "Read MAIL-1, then do ..."
     Host->>LLM: history + tool definitions
 
     LLM->>Host: function_call read_email(MAIL-1)

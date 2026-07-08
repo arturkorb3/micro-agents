@@ -61,20 +61,33 @@ function sumUntilLimit(arr, limit) {
 }
 ```
 
-The emulation call must then **linearize the loop** into explicit state
-sequences — turning the model from a narrator into a step-by-step simulator:
+The emulation call must then **linearize the run** into explicit state
+sequences — turning the model from a narrator into a step-by-step simulator.
+Each line keeps the literal `trace(...)` label on the left (verbatim, e.g.
+`arr[i]` stays `arr[i]`) and the evaluated payload values on the right. For
+`sumUntilLimit([4, 2, 5], 10)` the whole trace is:
 
 ```txt
-FOR_LOOP_1 / iteration 2
-condition: i < arr.length => true
-before: i=2, sum=6
-statement: value = arr[2]
-after: value=5
-statement: sum += value
-after: sum=11
-branch: sum >= limit => true
-control: break
+initial state               | arr=[4,2,5], limit=10, sum=0
+FOR_LOOP_1 / iteration 1 (i=0)
+FOR_LOOP_1 condition        | i=0, cond=true
+statement value = arr[i]    | i=0, value=4
+statement sum += value      | sum=4
+FOR_LOOP_1 / iteration 2 (i=1)
+FOR_LOOP_1 condition        | i=1, cond=true
+statement value = arr[i]    | i=1, value=2
+statement sum += value      | sum=6
+FOR_LOOP_1 / iteration 3 (i=2)
+FOR_LOOP_1 condition        | i=2, cond=true
+statement value = arr[i]    | i=2, value=5
+statement sum += value      | sum=11
+branch sum >= limit         | sum=11, limit=10, taken=true
+control break
+final state                 | sum=11
 ```
+
+(The `branch` line only appears when the `if` is taken — the `trace(...)`
+call sits inside the branch, so iterations 1 and 2 log no branch event.)
 
 ## Two-phase flow
 
