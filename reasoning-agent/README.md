@@ -1,7 +1,7 @@
 # reasoning-agent
 
 > **A reasoning wrapper for a non-reasoning model** — a fixed orchestration
-> scaffold that makes a small model like `gpt-5.4-mini` behave, from the
+> scaffold that makes a non-reasoning model like `gpt-4.1` behave, from the
 > outside, like a reasoning model.
 
 A complete agent loop in a single file (`agent.js`). No framework, no
@@ -47,7 +47,8 @@ result) or **`conceptual`** (judgment, explanation, recall), and declares
 shell tool when either applies — and if the plan had mechanical steps but the
 draft never ran a shell command, the host **forces a revision** with mandatory
 shell verification. Tool use is enforced by the host, not by prompt
-discipline: small models reliably ignore "you MUST use the tool" prompts.
+discipline: non-reasoning models reliably ignore "you MUST use the tool"
+prompts.
 
 Two properties mimic a native reasoning model:
 
@@ -126,7 +127,7 @@ node --env-file=../.env agent.js
 | Variable | Meaning |
 |---|---|
 | `OPENAI_API_KEY` | required |
-| `OPENAI_MODEL` | the (small) inner model to wrap, default `gpt-5.4-mini` |
+| `OPENAI_MODEL` | the (non-reasoning) inner model to wrap, default `gpt-4.1` |
 | `REASONING_EFFORT` | `low` \| `medium` \| `high` — critique/revision budget, default `medium` |
 
 ---
@@ -135,7 +136,7 @@ node --env-file=../.env agent.js
 
 ```
 Reasoning-wrapper agent started.
-Inner model: gpt-5.4-mini (non-reasoning) · effort: medium · shell: POSIX sh
+Inner model: gpt-4.1 (non-reasoning) · effort: medium · shell: POSIX sh
 Dimmed output is the scaffold's forced 'thinking'.
 Type /exit to quit.
 

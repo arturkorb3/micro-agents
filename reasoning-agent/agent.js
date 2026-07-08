@@ -2,7 +2,7 @@
 
 /**
  * Minimal "reasoning wrapper" agent: a fixed orchestration scaffold that makes
- * a small non-reasoning model behave, from the outside, like a reasoning model.
+ * a non-reasoning model behave, from the outside, like a reasoning model.
  *
  * The model itself is unchanged — the scaffold forces it through phases:
  *
@@ -28,7 +28,7 @@
  *   OPENAI_API_KEY="sk-..." node agent.js
  *
  * Optional:
- *   OPENAI_MODEL="gpt-5.4-mini"         the (small) model to wrap
+ *   OPENAI_MODEL="gpt-4.1"              the (non-reasoning) model to wrap
  *   REASONING_EFFORT="low|medium|high"  critique/revision budget (default medium)
  *
  * WARNING:
@@ -44,7 +44,7 @@ const { promisify } = require("node:util");
 const sh = promisify(exec);
 
 const API_KEY = process.env.OPENAI_API_KEY;
-const MODEL = process.env.OPENAI_MODEL || "gpt-5.4-mini";
+const MODEL = process.env.OPENAI_MODEL || "gpt-4.1";
 const EFFORT = (process.env.REASONING_EFFORT || "medium").toLowerCase();
 
 // Critique/revision budget per effort level, mimicking a reasoning-effort knob.
@@ -480,7 +480,7 @@ async function reasoningTurn(conversation, userText) {
 
   // Host-enforced shell use: if the plan had mechanical steps but the draft
   // never touched the shell, force one revision — prompt rules alone are
-  // not reliably followed by a small model.
+  // not reliably followed by a non-reasoning model.
   const hasMechanical = plan.steps.some((s) => s.kind === "mechanical");
   if (shellGranted && hasMechanical && !execution.usedShell) {
     thinking("host", "mechanical steps were not shell-verified — forcing revision");
