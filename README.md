@@ -19,8 +19,9 @@ with native function calling, and exactly **one tool**.
 | [`trace-agent`](trace-agent/) | `trace_eval` | A thought experiment: no runtime at all. The agent synthesizes small, pure, trace-hardened procedures and a second LLM call *emulates* them step by step ("LLM trace emulator"). |
 | [`trace-dag-agent`](trace-dag-agent/) | `trace_program` | The composition layer: small pure procedures with explicit I/O contracts, orchestrated as a pipeline/DAG with one stateless trace call per node. |
 | [`action-gate-agent`](action-gate-agent/) | mocked email/CRM tools | Runtime governance: a **fixed host policy gate** (validation, injection blocking, human approval, execution ledger) between the model's tool-call intents and their execution. Standalone pattern — does not depend on the trace idea. |
+| [`reasoning-agent`](reasoning-agent/) | `shell` | A **reasoning wrapper**: a fixed plan → execute → critique → finalize scaffold that makes a small non-reasoning model (e.g. `gpt-5.4-mini`) look like a reasoning model from the outside — visible "thinking" that never enters the persistent history, plus an effort knob. |
 
-Two independent ideas live here, deliberately not sold as one:
+Three independent ideas live here, deliberately not sold as one:
 
 - **The trace agents** (`trace-agent`, `trace-dag-agent`) execute **no code
   whatsoever** — they explore how far an LLM can get as a rudimentary
@@ -31,6 +32,12 @@ Two independent ideas live here, deliberately not sold as one:
   entirely on its own and does not depend on the trace idea. The only
   connection is a shared attitude: force the model through fixed, checkable
   structures instead of free text.
+- **`reasoning-agent`** explores the flip side of native reasoning models: if
+  reasoning models are partly an *internalized* agent scaffold, then an
+  external scaffold (plan / execute / critique / finalize, hidden "thinking",
+  effort knob) should be able to emulate reasoning behavior around an
+  unmodified small model — error damping through structured context, not
+  guaranteed correctness.
 
 ---
 
